@@ -27,10 +27,10 @@ An htmlv document resembles an HTML document but includes additional elements an
     <meta name="compile-mode" content="precompile">
 </head>
 <body>
-    <scene style="length: 10s; scene-transition: fade 2s;">
+    <scene style="time-length: 10s; scene-transition: fade 2s;">
         <text class="title">Welcome to htmlv</text>
     </scene>
-    <scene style="length: 15s;">
+    <scene style="time-length: 15s;">
         <video src="intro.mp4"></video>
         <scene>
             <text class="subtitle">Creating videos with code</text>
@@ -46,7 +46,7 @@ An htmlv document resembles an HTML document but includes additional elements an
 Defines a temporal segment of the video. Nested <scene> elements create hierarchical timelines.
 
 Attributes:
-- style: Includes length, scene-transition, and other time-based properties.
+- style: Includes time-length, scene-transition, and other time-based properties.
 
 ### <text>
 Represents text content within a scene.
@@ -60,15 +60,21 @@ Embeds a video clip into the scene.
 
 - Attributes:
   -  src: Source file of the video.
-  - style: Can include length and other time-based properties.
+  - style: Can include time-length and other time-based properties.
 
 ### <audio>
 Embeds an audio clip into the scene.
 
 - Attributes:
   - src: Source file of the audio.
-  - style: Can include length and other time-based properties.
+  - style: Can include time-length and other time-based properties.
 
+### <sequence>
+Embeds an sequence clip into the scene.
+
+- Attributes:
+  - src: Source file of the audio.
+  - style: Can include time-length and other time-based properties.
 ## New Elements
 
 ### `<ai-generate>`
@@ -111,11 +117,11 @@ Embeds another htmlv document within the current one.
 ## Attributes and Styles
 
 ### Time Management Properties
-- length: Specifies the duration of an element (e.g., length: 10s; or length: 50%;).
-- start: Time offset from the beginning of the parent scene (e.g., start: 5s;).
-- end: Time offset to the end of the element within the parent scene (e.g., end: 15s;).
+- time-length: Specifies the duration of an element (e.g., time-length: 10s; or time-length: 50%;).
+- time-start: Time offset from the beginning of the parent scene (e.g., time-start: 5s;).
+- time-end: Time offset to the end of the element within the parent scene (e.g., time-end: 15s;).
 - time-position: Controls the temporal positioning of an element.
-- Values: static, relative, absolute, fixed.
+  - Values: static, relative, absolute, fixed.
 - time-margin: Adjusts the starting point of an element relative to its natural start time.
 - time-padding: Extends the duration of an element by adding time at the end.
 - time-margin-start, time-margin-end: Individual control over start and end margins.
@@ -159,14 +165,16 @@ To avoid conflicts with existing CSS properties, scene-transition is used to def
   - Example: .logo:time(10s, 12s) { color: blue; }
 
 ### New Properties
-- length: Duration of an element.
+- time-length: Duration of an element.
 - start: Start time offset within the parent.
 - end: End time offset within the parent.
 - easing: Timing function for animations.
 - scene-transition: Defines the transition effect for scenes.
-- time-position: Temporal positioning of elements (static, relative, absolute, fixed).
+- time-position: Temporal positioning of elements.
+  - Values: static, relative, absolute, fixed.
 - time-margin, time-padding, time-margin-start, time-margin-end, time-padding-start, time-padding-end: Control temporal margins and padding.
-- loop: How to repeat video or seen until time is filled (none, loop, flipflap, stretch).
+- loop: How to repeat video or seen until time is filled
+  - Values: none, loop, flipflap, stretch.
 
 ### Text Display Controls
 - text-display: Controls how text appears over time.
@@ -180,7 +188,7 @@ To avoid conflicts with existing CSS properties, scene-transition is used to def
 ```css
 .logo {
     color: white;
-    length: 30s;
+    time-length: 30s;
     easing: linear;
 }
 
@@ -210,52 +218,42 @@ JavaScript can manipulate the DOM before rendering begins and during playback.
 ## Examples
 
 ### Scene with Transition and Time Adjustments
+
 ```html
-<scene style="length: 20s; scene-transition: fade 2s;">
-    <image src="background.jpg" style="length: 20s;"></image>
+<scene style="scene-transition: fade 2s;">
+    <image src="background.jpg" style="time-length: 20s;"></image>
     <text class="title" style="start: 2s;">Hello World</text>
-</scene>
-```
-
-### Lip Sync and Speech Combination
-
-```html
-<scene style="length: 15s;">
-    <ai-lip-sync src="character.png" audio="speech.mp3" seed="1234" style="length: 15s;"></ai-lip-sync>
-    <ai-speech text="Welcome to our presentation." voice="en-US" seed="1234" style="start: 0s;"></ai-speech>
-</scene>
-```
-
-### Applying Filters and Masks
-
-```html
-<scene style="length: 10s;">
-    <ai-filter type="anime" target="#portrait" seed="5678" style="length: 10s;"></ai-filter>
-    <ai-mask criteria="background" target="#portrait" seed="5678" style="length: 10s;"></ai-mask>
-    <image id="portrait" src="person.jpg" style="length: 10s;"></image>
 </scene>
 ```
 
 ### AI-Generated Video from Prompt
 
 ```html
-<scene style="length: 5s;">
-    <ai-video prompt="A serene landscape with mountains and a river at sunset" seed="7890" style="length: 5s;"></ai-video>
+<scene>
+    <video style="width: 100%; height: 100%; time-length: 10s;">
+      <ai-generate type="video/mp4" prompt="A serene landscape with mountains and a river at sunset" seed="7890"></ai-generate>
+      <ai-filter type="video/mp4" prompt="Black and White" seed="7890"></ai-generate>
+    </video>
 </scene>
 ```
 
-### Image Sequence Video
+### Sequence Video
 
 ```html
-<scene style="length: 5s;">
-    <image-sequence src="frames/frame_1.png,frames/frame_2.png,frames/frame_3.png" style="length: 5s; framerate: 24fps;"></image-sequence>
+<scene>
+    <sequence style="time-length: 5s;">
+      <img src="frame1.png">
+      <img src="frame2.png">
+      <img src="frame3.png">
+      <p style="time-length: 2s;">Hello World</p>
+    </sequence>
 </scene>
 ```
 
 ### Embedding Another htmlv Document
 
 ```html
-<iframe src="additional_content.htmlv" style="length: 10s;"></iframe>
+<iframe src="additional_content.htmlv"></iframe>
 ```
 
 ## Conclusion
