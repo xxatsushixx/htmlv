@@ -1,0 +1,13 @@
+<!DOCTYPE htmlv>
+<html>
+<head>
+    <title>Sample Video</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <scene style="time-length: 10s; scene-transition: fade 2s;">
+        <text class="title">Welcome to htmlv</text>
+    </scene>
+</body>
+</html>
+

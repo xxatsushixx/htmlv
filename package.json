@@ -1,0 +1,17 @@
+{
+  "name": "htmlv-project",
+  "version": "1.0.0",
+  "description": "HTML for Video (htmlv) compiler and runtime implemented in TypeScript",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "echo \"No tests specified\""
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "typescript": "^4.5.2"
+  }
+}
