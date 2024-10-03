@@ -71,7 +71,7 @@ Embeds an audio clip into the scene.
 
 ## New Elements
 
-### <ai-generate>
+### `<ai-generate>`
 Generates text, image, audio, video content from prompts or modifies existing media using AI.
 
 - Attributes:
@@ -81,7 +81,7 @@ Generates text, image, audio, video content from prompts or modifies existing me
   - seed: Optional seed for caching AI processing.
   - api: Optional API url for generating content.
 
-### <ai-filter>
+### `<ai-filter>`
 Applies AI-based filters to text, image, audio or video.
 
 - Attributes:
@@ -91,7 +91,7 @@ Applies AI-based filters to text, image, audio or video.
   - seed: Optional seed for caching AI processing.
   - api: Optional API url for generating content.
 
-### <ai-subtitle>
+### `<ai-subtitle>`
 Displays subtitles generated from AI-based transcription.
 
 - Attributes:
@@ -101,7 +101,7 @@ Displays subtitles generated from AI-based transcription.
   - seed: Optional seed for caching AI processing.
   - api: Optional API url for generating content.
 
-### <iframe>
+### `<iframe>`
 Embeds another htmlv document within the current one.
 
 - Attributes:
