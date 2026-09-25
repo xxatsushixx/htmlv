@@ -1,5 +1,4 @@
 "use strict";
-// src/parser/Token.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokenType = exports.Token = void 0;
 /**
@@ -19,11 +18,14 @@ exports.Token = Token;
  */
 var TokenType;
 (function (TokenType) {
-    TokenType[TokenType["TAG_OPEN"] = 0] = "TAG_OPEN";
-    TokenType[TokenType["TAG_CLOSE"] = 1] = "TAG_CLOSE";
-    TokenType[TokenType["ATTRIBUTE_NAME"] = 2] = "ATTRIBUTE_NAME";
-    TokenType[TokenType["ATTRIBUTE_VALUE"] = 3] = "ATTRIBUTE_VALUE";
-    TokenType[TokenType["TEXT_CONTENT"] = 4] = "TEXT_CONTENT";
-    TokenType[TokenType["EOF"] = 5] = "EOF";
-    // ... add other token types as needed
-})(TokenType = exports.TokenType || (exports.TokenType = {}));
+    TokenType[TokenType["DOCTYPE"] = 0] = "DOCTYPE";
+    TokenType[TokenType["COMMENT"] = 1] = "COMMENT";
+    TokenType[TokenType["TAG_OPEN"] = 2] = "TAG_OPEN";
+    TokenType[TokenType["TAG_CLOSE_OPEN"] = 3] = "TAG_CLOSE_OPEN";
+    TokenType[TokenType["TAG_END"] = 4] = "TAG_END";
+    TokenType[TokenType["TAG_SELF_CLOSE"] = 5] = "TAG_SELF_CLOSE";
+    TokenType[TokenType["ATTRIBUTE_NAME"] = 6] = "ATTRIBUTE_NAME";
+    TokenType[TokenType["ATTRIBUTE_VALUE"] = 7] = "ATTRIBUTE_VALUE";
+    TokenType[TokenType["TEXT_CONTENT"] = 8] = "TEXT_CONTENT";
+    TokenType[TokenType["EOF"] = 9] = "EOF";
+})(TokenType || (exports.TokenType = TokenType = {}));

@@ -3,11 +3,13 @@
 import { Token, TokenType } from './Token';
 import {
   ASTNode,
-  ASTNodeType,
   ElementNode,
   TextNode,
   AttributeNode,
   DocumentNode,
+  CommentNode,
+  DoctypeNode,
+  VOID_TAGS,
 } from './ASTNode';
 
 /**
@@ -15,7 +17,7 @@ import {
  */
 export class Parser {
   private tokens: Token[];
-  private current: number = 0;
+  private current = 0;
 
   constructor(tokens: Token[]) {
     this.tokens = tokens;
@@ -23,78 +25,102 @@ export class Parser {
 
   /**
    * Parses the token list and returns the root AST node.
-   * @returns The root node of the AST.
    */
-  public parse(): ASTNode {
+  public parse(): DocumentNode {
     const nodes: ASTNode[] = [];
+    let doctype: string | null = null;
 
     while (!this.isAtEnd()) {
+      if (this.match(TokenType.DOCTYPE)) {
+        doctype = this.previous().value;
+        nodes.push(new DoctypeNode(doctype));
+        continue;
+      }
+      if (this.match(TokenType.COMMENT)) {
+        nodes.push(new CommentNode(this.previous().value));
+        continue;
+      }
       const node = this.parseNode();
       if (node) {
         nodes.push(node);
       }
     }
 
-    return new DocumentNode(nodes);
+    return new DocumentNode(nodes, doctype);
   }
 
   private parseNode(): ASTNode | null {
     if (this.match(TokenType.TAG_OPEN)) {
       return this.parseElement();
-    } else if (this.match(TokenType.TEXT_CONTENT)) {
-      return this.parseText();
-    } else {
-      this.advance();
-      return null;
     }
+    if (this.match(TokenType.TEXT_CONTENT)) {
+      return this.parseText();
+    }
+    if (this.match(TokenType.COMMENT)) {
+      return new CommentNode(this.previous().value);
+    }
+    if (this.match(TokenType.DOCTYPE)) {
+      return new DoctypeNode(this.previous().value);
+    }
+    // Skip unexpected tokens
+    if (!this.isAtEnd()) {
+      this.advance();
+    }
+    return null;
   }
 
   private parseElement(): ElementNode {
-    const tagToken = this.previous();
-    const tagName = tagToken.value;
-
+    const tagName = this.previous().value;
     const attributes: AttributeNode[] = [];
+
     while (this.match(TokenType.ATTRIBUTE_NAME)) {
-      const nameToken = this.previous();
+      const name = this.previous().value;
       let value = '';
       if (this.match(TokenType.ATTRIBUTE_VALUE)) {
         value = this.previous().value;
       }
-      attributes.push(new AttributeNode(nameToken.value, value));
+      attributes.push(new AttributeNode(name, value));
     }
 
-    this.consume(TokenType.TAG_CLOSE, 'Expected ">" after tag.');
+    if (this.match(TokenType.TAG_SELF_CLOSE)) {
+      return new ElementNode(tagName, attributes, []);
+    }
+
+    this.consume(TokenType.TAG_END, `Expected ">" after <${tagName}>.`);
+
+    if (VOID_TAGS.has(tagName)) {
+      return new ElementNode(tagName, attributes, []);
+    }
 
     const children: ASTNode[] = [];
-    while (!this.check(TokenType.TAG_OPEN) && !this.isAtEnd()) {
+    while (!this.isAtEnd()) {
+      if (this.check(TokenType.TAG_CLOSE_OPEN)) {
+        break;
+      }
       const child = this.parseNode();
       if (child) {
         children.push(child);
       }
     }
 
-    // Handle closing tag if necessary
-    if (this.match(TokenType.TAG_OPEN)) {
-      if (this.match(TokenType.TAG_CLOSE)) {
-        const closingTagName = this.previous().value;
-        if (closingTagName !== tagName) {
-          throw new Error(
-            `Expected closing tag </${tagName}> but found </${closingTagName}>.`
-          );
-        }
-        this.consume(TokenType.TAG_CLOSE, 'Expected ">" after closing tag.');
+    if (this.match(TokenType.TAG_CLOSE_OPEN)) {
+      const closingName = this.previous().value;
+      if (closingName !== tagName) {
+        throw new Error(
+          `Expected closing tag </${tagName}> but found </${closingName}>.`
+        );
       }
+      this.consume(TokenType.TAG_END, `Expected ">" after </${tagName}>.`);
+    } else if (!this.isAtEnd()) {
+      throw new Error(`Unclosed tag <${tagName}>.`);
     }
 
     return new ElementNode(tagName, attributes, children);
   }
 
   private parseText(): TextNode {
-    const textToken = this.previous();
-    return new TextNode(textToken.value);
+    return new TextNode(this.previous().value);
   }
-
-  // Utility parsing methods
 
   private match(...types: TokenType[]): boolean {
     for (const type of types) {
@@ -133,4 +159,3 @@ export class Parser {
     return this.tokens[this.current - 1];
   }
 }
-

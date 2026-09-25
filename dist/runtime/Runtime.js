@@ -1,17 +1,21 @@
 "use strict";
-// src/runtime/Runtime.ts
+/**
+ * Node-side runtime helpers: load IR, optional static serve payload.
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Runtime = void 0;
-/**
- * Runtime class responsible for executing the compiled code or interpreting the AST.
- */
 class Runtime {
     /**
-     * Executes the given code or AST.
-     * @param input - The compiled code as a string or AST.
+     * Validates and returns IR for the browser player.
      */
     execute(input) {
-        // TODO: Implement the runtime execution logic
+        if (typeof input === 'string') {
+            return JSON.parse(input);
+        }
+        return input;
+    }
+    toJSON(ir) {
+        return JSON.stringify(ir, null, 2);
     }
 }
 exports.Runtime = Runtime;

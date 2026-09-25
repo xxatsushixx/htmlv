@@ -1,5 +1,3 @@
-// src/parser/Token.ts
-
 /**
  * Represents a lexical token.
  */
@@ -16,12 +14,14 @@ export class Token {
  * Enum for token types.
  */
 export enum TokenType {
-  TAG_OPEN,
-  TAG_CLOSE,
+  DOCTYPE,
+  COMMENT,
+  TAG_OPEN, // "<name" — value is tag name
+  TAG_CLOSE_OPEN, // "</name" — value is tag name
+  TAG_END, // ">"
+  TAG_SELF_CLOSE, // "/>"
   ATTRIBUTE_NAME,
   ATTRIBUTE_VALUE,
   TEXT_CONTENT,
   EOF,
-  // ... add other token types as needed
 }
-

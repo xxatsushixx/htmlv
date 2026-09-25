@@ -1,38 +1,110 @@
-# HTML for Video (htmlv) Specification
+# HTML for Video (htmlv)
 
-> [!NOTE]
-> This specification is under development. Contributions are welcome!
+**htmlv** is a markup language and toolchain for authoring time-based, interactive videos with HTML/CSS/JS-like syntax. This document is the normative language specification for the reference TypeScript implementation in this repository.
+
+> Conformance levels and deferred features are listed in [Conformance](#conformance).
 
 ## Introduction
-HTML for Video (htmlv) is a markup language designed to empower web developers to create rich, interactive videos using familiar web development technologies. By extending standard HTML and CSS, htmlv introduces time-based media control, enabling precise manipulation of video content, animations, and transitions. The aim is to bring the flexibility and power of web development to video creation.
 
-## Basic Concepts
-- Time-Based Layout: Unlike traditional HTML, which allows infinite vertical scrolling, htmlv operates within fixed screen dimensions determined by the playback environment's aspect ratio. Content is aligned both vertically and horizontally based on this aspect ratio.
-- Temporal DOM: In htmlv, the Document Object Model (DOM) represents elements over time. Repeating elements extend the timeline rather than the vertical space, effectively creating a temporal layout.
-- Integration with CSS and JavaScript: htmlv utilizes CSS for styling and JavaScript for dynamic DOM manipulation, similar to HTML, but with additional time-based properties and methods.
+htmlv extends familiar web technologies with a **temporal layout model**: documents describe what appears on a fixed stage over time, not an infinitely scrolling page. Developers write `.htmlv` files; the toolchain parses them, compiles a **Timeline IR**, and plays the result in a **browser player**.
 
-## Document Structure
-An htmlv document resembles an HTML document but includes additional elements and attributes specific to time-based media.
+**For engineers building an online video editor:** treat htmlv as a **timeline runtime under your UI**—a temporal DOM, a compiled Timeline IR, and a browser preview engine—not a finished editor product. Your app owns tracks, assets, and collaboration; htmlv owns time layout, preview playback, and (later) encode. Server-side MP4/WebM output is deferred; the reference player is the integration surface today.
 
-## Example Structure
+## Basic concepts
+
+- **Fixed stage.** Layout uses a fixed aspect ratio (default 16:9). Content is positioned within that stage, not stacked into a scrollable document height.
+- **Temporal DOM.** The document tree describes elements over time. Sibling scenes advance the timeline; nested scenes create hierarchical time scopes.
+- **CSS and JavaScript.** Styling and scripting work like HTML, with additional time-based properties, the `:time()` pseudo-class, and a small DOM API for pre-play and runtime interaction.
+- **Primary output.** The reference runtime is an interactive **browser player**. Server-side encode to MP4/WebM is a future extension (see [Deferred](#deferred-features)).
+
+## Building an editor on htmlv
+
+Use htmlv as the **preview substrate**. Emit `.htmlv` (or patch IR) from your editor state, compile, load the player, and sync the playhead with your timeline UI.
+
+### Status
+
+| Capability | Status |
+|------------|--------|
+| Browser preview runtime | **Required / shipping** |
+| Timeline IR as interchange | **Shipping** |
+| AI media | **HTTP `api` hook**; stub placeholder if omitted |
+| Live mutate → full IR recompile | **Best-effort** (optional conformance) |
+| Server encode (MP4/WebM) | **Deferred** |
+
+### Editor → htmlv map
+
+| Editor concept | htmlv |
+|----------------|-------|
+| Timeline / sequence of clips | Top-level `<scene>` siblings |
+| Clip on a track | `video`, `audio`, `img`, `text`, `sequence` child |
+| Overlay / lower-third | Child with `time-position: absolute` (+ `time-start` / `time-length`) |
+| Transition between cuts | `scene-transition` on a scene |
+| Nested composition / template | `<iframe src="other.htmlv">` or nested `<scene>` |
+| Generative fill | `<ai-generate>` / `<ai-filter>` (+ optional `api`) |
+| Preview clock | `htmlv.play()` / `pause()` / `seek(seconds)` + `timeupdate` |
+| Persist / reopen project | Timeline IR JSON (`compileSource` / `compileFile` output) |
+
+### Integration path
+
+```text
+Editor UI state  →  .htmlv (or IR patch)  →  compile  →  Timeline IR  →  player.load
+                         ↑                                         │
+                         └──────── seek / timeupdate / sceneenter ─┘
+```
+
+Library (Node or bundler):
+
+```js
+const { compileSource, compileFile } = require('htmlv');
+// or: import { compileSource, compileFile } from 'htmlv';
+
+const ir = compileSource(htmlvString);
+// persist ir, or embed into player/ as window.__HTMLV_IR__
+```
+
+CLI preview while you build the editor shell:
+
+```bash
+npx htmlv serve examples/showcase.htmlv
+# player: source + stage + track strip at http://127.0.0.1:4173/
+```
+
+In the player page (or an iframe you host):
+
+```js
+htmlv.play();
+htmlv.seek(12.5);
+htmlv.addEventListener('timeupdate', (e) => {
+  // sync your timeline playhead: e.detail.currentTime (seconds)
+});
+```
+
+---
+
+## Document structure
+
+An htmlv document must begin with `<!DOCTYPE htmlv>` (case-insensitive). The root element is `<html>`, containing optional `<head>` and required `<body>`.
+
+Top-level children of `<body>` that participate in the timeline **must** be `<scene>` elements (in document order). Other body children are ignored for timeline layout unless specified otherwise.
+
+### Minimal example
+
 ```html
 <!DOCTYPE htmlv>
 <html>
 <head>
     <title>Sample Video</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js"></script>
-    <meta name="seed" content="12345">
     <meta name="framerate" content="30fps">
     <meta name="compile-mode" content="precompile">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <scene style="time-length: 10s; scene-transition: fade 2s;">
         <text class="title">Welcome to htmlv</text>
     </scene>
     <scene style="time-length: 15s;">
-        <video src="intro.mp4"></video>
-        <scene>
+        <video src="intro.mp4" style="time-length: 100%;"></video>
+        <scene style="time-length: 5s; time-start: 5s;">
             <text class="subtitle">Creating videos with code</text>
         </scene>
     </scene>
@@ -40,222 +112,420 @@ An htmlv document resembles an HTML document but includes additional elements an
 </html>
 ```
 
+### Head metadata
+
+| Meta `name` | `content` example | Meaning |
+|-------------|-------------------|---------|
+| `seed` | `12345` | Global default seed for AI caching |
+| `framerate` | `30fps` | Target playback frame rate |
+| `framerate-mode` | `slowdown` \| `drop-frames` | Behavior when the player cannot sustain the target rate |
+| `compile-mode` | `precompile` \| `compile-during-playback` | When scenes are compiled to IR (see [Compilation](#compilation)) |
+| `aspect-ratio` | `16:9` | Stage aspect ratio |
+| `width` | `1920` | Optional stage width in CSS pixels (height derived from aspect) |
+
+`<link rel="stylesheet">` and `<script src>` / inline `<script>` are supported as described in [CSS](#css-extensions) and [JavaScript](#javascript-dom-api).
+
+---
+
 ## Elements
 
-### <scene>
-Defines a temporal segment of the video. Nested <scene> elements create hierarchical timelines.
+### `<scene>`
 
-Attributes:
-- style: Includes time-length, scene-transition, and other time-based properties.
+Defines a temporal segment. Nested `<scene>` elements create child timelines relative to the parent scene.
 
-### <text>
-Represents text content within a scene.
+| Attribute | Description |
+|-----------|-------------|
+| `id` | Optional identifier for scripting and AI `target` |
+| `class` | CSS classes |
+| `style` | Includes time and transition properties |
 
-- Attributes:
-  - class: Used for CSS styling.
-  - style: Can include time-based properties like start, end, time-position.
+**Children:** any flow content listed in this spec (`scene`, `text`, `video`, `audio`, `sequence`, `img`, `image`, `iframe`, AI elements, and ordinary text nodes treated as anonymous text).
 
-### <video>
-Embeds a video clip into the scene.
+**Default duration:** if `time-length` is omitted, duration is the maximum end time of children (at least 0s).
 
-- Attributes:
-  -  src: Source file of the video.
-  - style: Can include time-length and other time-based properties.
+### `<text>`
 
-### <audio>
-Embeds an audio clip into the scene.
+Text content on the stage.
 
-- Attributes:
-  - src: Source file of the audio.
-  - style: Can include time-length and other time-based properties.
+| Attribute | Description |
+|-----------|-------------|
+| `id`, `class`, `style` | Standard |
+| (text children) | Character data is the displayed string |
 
-### <sequence>
-Embeds an sequence clip into the scene.
+### `<video>` / `<audio>`
 
-- Attributes:
-  - src: Source file of the audio.
-  - style: Can include time-length and other time-based properties.
-## New Elements
+Embed media clips.
 
-### `<ai-generate>`
-Generates text, image, audio, video content from prompts or modifies existing media using AI.
+| Attribute | Description |
+|-----------|-------------|
+| `src` | Media URL (required unless filled by a child AI element) |
+| `id`, `class`, `style` | Standard |
 
-- Attributes:
-  - target: Target element id to set content.
-  - type: MIME type of the content. (e.g., "image/png")
-  - prompt: Text description to generate or modify content. (e.g., "red fish in the sea.")
-  - seed: Optional seed for caching AI processing.
-  - api: Optional API url for generating content.
+Children may include `<ai-generate>` / `<ai-filter>` that supply or transform media before playback.
 
-### `<ai-filter>`
-Applies AI-based filters to text, image, audio or video.
+### `<sequence>`
 
-- Attributes:
-  - target: Target element to apply the filter.
-  - type: MIME type of the content. (e.g., "image/png")
-  - prompt: Description of what to do. (e.g., "Mask the mountains")
-  - seed: Optional seed for caching AI processing.
-  - api: Optional API url for generating content.
+Plays children in temporal order (or as discrete frames when children are images), packing them into the sequence’s `time-length`.
 
-### `<ai-subtitle>`
-Displays subtitles generated from AI-based transcription.
+| Attribute | Description |
+|-----------|-------------|
+| `id`, `class`, `style` | Standard; `time-length` sets the total sequence window |
 
-- Attributes:
-  - src: Source video or audio for transcription.
-  - language: Language of the transcription.
-  - target: Target element to set the transcription.
-  - seed: Optional seed for caching AI processing.
-  - api: Optional API url for generating content.
+**Children:** `img`, `image`, `text`, `video`, `audio`, `p`, or nested content. Image-only children are treated as frame strips distributed across `time-length`. Mixed children are laid out sequentially using each child’s resolved duration.
+
+### `<img>` / `<image>`
+
+Still image on the stage. `<image>` is an alias of `<img>`.
+
+| Attribute | Description |
+|-----------|-------------|
+| `src` | Image URL |
+| `id`, `class`, `style` | Standard |
 
 ### `<iframe>`
-Embeds another htmlv document within the current one.
 
-- Attributes:
-  - src: URL of the htmlv document to embed.
-  - style: Includes time-based and layout properties.
+Embeds another htmlv document. The referenced `.htmlv` is compiled to nested Timeline IR and played in a sub-stage.
 
-## Attributes and Styles
+| Attribute | Description |
+|-----------|-------------|
+| `src` | URL or path to an `.htmlv` document |
+| `id`, `class`, `style` | Standard; time properties control when the embed is active |
 
-### Time Management Properties
-- time-length: Specifies the duration of an element (e.g., time-length: 10s; or time-length: 50%;).
-- time-start: Time offset from the beginning of the parent scene (e.g., time-start: 5s;).
-- time-end: Time offset to the end of the element within the parent scene (e.g., time-end: 15s;).
-- time-position: Controls the temporal positioning of an element.
-  - Values: static, relative, absolute, fixed.
-- time-margin: Adjusts the starting point of an element relative to its natural start time.
-- time-padding: Extends the duration of an element by adding time at the end.
-- time-margin-start, time-margin-end: Individual control over start and end margins.
-- time-padding-start, time-padding-end: Individual control over start and end padding.
+### `<ai-generate>`
 
-### Transition Effects
-To avoid conflicts with existing CSS properties, scene-transition is used to define entry and exit effects for scenes.
+Requests generated media (text, image, audio, or video) from an HTTP API.
 
-- Syntax:
-  - scene-transition: effect duration;
-  - Negative duration indicates immediate effect without animation.
-- Values:
-  - fade, zoom, dissolve, flip3d, iris, wipe, slide: Available transition effects.
+| Attribute | Description |
+|-----------|-------------|
+| `type` | MIME type, e.g. `image/png`, `video/mp4`, `text/plain` |
+| `prompt` | Generation prompt |
+| `target` | Optional element `id` to receive the result |
+| `seed` | Cache key (falls back to document `seed` meta) |
+| `api` | Optional API URL; if omitted, the player uses a stub placeholder |
 
-### Frame Rate Control
-- framerate: Specifies the frame rate for the video or scene.
-  - Values: e.g., framerate: 30fps;
-- framerate-mode: Defines behavior when frame rate is insufficient.
-  - Values: slowdown, drop-frames
+When nested under `video`/`audio`/`img` without `target`, the result becomes that parent’s media source.
 
-### Compilation Mode
-- compile-mode: Specifies whether to compile before playback or during playback.
-  - Values: precompile, compile-during-playback
+### `<ai-filter>`
 
-### Example: Head Element with Global Settings
-```html
-<head>
-    <title>Advanced Video</title>
-    <meta name="seed" content="67890">
-    <meta name="framerate" content="24fps">
-    <meta name="framerate-mode" content="drop-frames">
-    <meta name="compile-mode" content="compile-during-playback">
-    <link rel="stylesheet" href="styles.css">
-</head>
+Applies an AI transform to existing media.
+
+| Attribute | Description |
+|-----------|-------------|
+| `type` | MIME type of the expected output |
+| `prompt` | Filter instruction |
+| `target` | Optional source element `id` (default: parent media) |
+| `seed`, `api` | Same as `<ai-generate>` |
+
+### `<ai-subtitle>`
+
+Requests a transcription/subtitle track from audio or video.
+
+| Attribute | Description |
+|-----------|-------------|
+| `src` | Media to transcribe (or inherit from parent) |
+| `language` | BCP 47 language tag |
+| `target` | Element `id` to receive subtitle text/cues |
+| `seed`, `api` | Same as `<ai-generate>` |
+
+---
+
+## Time properties
+
+Time is expressed as:
+
+- Absolute: `10s`, `500ms`, `0`
+- Percentage of **parent scene duration**: `50%`
+
+### Canonical properties
+
+| Property | Meaning |
+|----------|---------|
+| `time-length` | Duration of the element |
+| `time-start` | Offset from the start of the parent scene’s content box |
+| `time-end` | End offset within the parent (alternative to `time-length` when paired with `time-start`) |
+| `time-position` | `static` (default) \| `relative` \| `absolute` \| `fixed` |
+| `time-margin` | Shorthand: delay before natural start / trim after natural end |
+| `time-margin-start`, `time-margin-end` | Individual margins |
+| `time-padding` | Extend duration after content |
+| `time-padding-start`, `time-padding-end` | Individual paddings |
+| `easing` | Timing function name (`linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out`) |
+| `loop` | How to fill remaining parent time: `none` (default) \| `loop` \| `flipflap` \| `stretch` |
+| `scene-transition` | See [Transitions](#transitions) |
+| `text-display` | How text appears: `character` \| `word` \| `line` \| `block` (default) |
+| `text-duration` | Duration over which `text-display` reveal runs |
+| `framerate` | Per-element override of document framerate |
+
+### Aliases (normalized at compile time)
+
+| Alias | Canonical |
+|-------|-----------|
+| `start` | `time-start` |
+| `end` | `time-end` |
+
+Authors may use either form; the compiler stores only canonical names in IR.
+
+### Time-position modes
+
+- **`static`:** Auto-flow in document order. Each static sibling starts after the previous static sibling’s end (plus margins), unless `time-start` is set.
+- **`relative`:** Like static, but `time-start` / margins adjust the auto position.
+- **`absolute`:** Positioned solely by `time-start` / `time-end` / `time-length` relative to the parent content start; does not push siblings.
+- **`fixed`:** Positioned relative to the **root timeline** (document playhead), ignoring parent offsets except for clipping to the parent’s active interval when nested.
+
+### Time layout algorithm (normative outline)
+
+For each scene S with resolved parent-local interval `[S0, S1)`:
+
+1. Resolve S’s `time-length` (or infer from children).
+2. Partition children into flow (`static`/`relative`) and out-of-flow (`absolute`/`fixed`).
+3. Place flow children in tree order, applying `time-start` when present, else packing after the previous flow child’s end; apply margins/paddings.
+4. Place absolute children from `time-start` within S; place fixed children on the root clock then clip to S’s active window for visibility.
+5. Nested scenes repeat the algorithm with their local zero at their resolved `time-start`.
+
+---
+
+## Transitions
+
+`scene-transition` applies between **sibling** scenes (exit of current / entry of next).
+
+**Syntax:** `scene-transition: <effect> <duration>;`
+
+- `<effect>`: `fade` \| `zoom` \| `dissolve` \| `flip3d` \| `iris` \| `wipe` \| `slide`
+- `<duration>`: time value; a **negative** duration means a cut (instant switch) with no animation
+
+The transition duration overlaps the boundary: half may belong to exit and half to entry as implemented by the player; total timeline length of the parent is not extended unless padding is used.
+
+Unsupported effects in a given player version **must** fall back to `fade` with the same duration.
+
+---
+
+## Frame rate and compile mode
+
+### Framerate
+
+- Document default from `<meta name="framerate" content="30fps">` (default `30fps` if omitted).
+- `framerate-mode: slowdown` — slow the clock to match achievable rate.
+- `framerate-mode: drop-frames` — keep wall-clock time, skip frames (default).
+
+### Compilation
+
+| Mode | Behavior |
+|------|----------|
+| `precompile` (default) | Entire document compiles to Timeline IR before playback; the player builds all stage layers up front |
+| `compile-during-playback` | The reference compiler still emits a full IR (so seeking and duration are known). The **player** lazily creates DOM layers as the playhead approaches each node (~2s prefetch). A future revision may also defer nested resource compilation |
+
+---
+
+## CSS extensions
+
+### Pseudo-class `:time()`
+
+```css
+.logo:time(10s, 12s) {
+  color: blue;
+}
 ```
 
-## CSS Extensions for htmlv
+Applies the rule only while the **element-local** time is within `[start, end)`. Times may use `s` / `ms` / `%` of the element’s `time-length`.
 
-### Time-Based Pseudo-Classes
-- :time(start, end): Applies styles during a specific time range.
-  - Example: .logo:time(10s, 12s) { color: blue; }
+### Stage-oriented CSS subset
 
-### New Properties
-- time-length: Duration of an element.
-- start: Start time offset within the parent.
-- end: End time offset within the parent.
-- easing: Timing function for animations.
-- scene-transition: Defines the transition effect for scenes.
-- time-position: Temporal positioning of elements.
-  - Values: static, relative, absolute, fixed.
-- time-margin, time-padding, time-margin-start, time-margin-end, time-padding-start, time-padding-end: Control temporal margins and padding.
-- loop: How to repeat video or seen until time is filled
-  - Values: none, loop, flipflap, stretch.
+The reference player honors: `color`, `background`, `background-color`, `opacity`, `font-*`, `width`, `height`, `top`, `left`, `right`, `bottom`, `transform`, `object-fit`, `text-align`, `z-index`, plus all htmlv time properties above. Full CSS layout (flex/grid/flow into scrollable pages) is **not** required.
 
-### Text Display Controls
-- text-display: Controls how text appears over time.
-  - Values: character, word, line, block.
-- text-duration: Duration over which the text appears.
+### Example
 
-### Layout Adjustments
-- Text and elements will auto-adjust to fit within specified dimensions (width, height), maintaining aspect ratio and readability.
-
-### Example: Time-Based Styling
 ```css
 .logo {
-    color: white;
-    time-length: 30s;
-    easing: linear;
+  color: white;
+  time-length: 30s;
+  easing: linear;
 }
 
 .logo:time(10s, 12s) {
-    color: blue;
+  color: blue;
 }
 
 .subtitle {
-    text-display: character;
-    text-duration: 5s;
-    time-position: absolute;
-    start: 10s;
+  text-display: character;
+  text-duration: 5s;
+  time-position: absolute;
+  time-start: 10s;
 }
 
-.scene {
-    scene-transition: fade 2s;
+scene, .scene {
+  /* element type or class */
 }
 ```
 
-## JavaScript Interaction
-JavaScript can manipulate the DOM before rendering begins and during playback.
+Note: use property `scene-transition` on scenes via inline style or a `scene` / class selector; there is no separate `scene { }` requirement beyond normal CSS.
 
-- Pre-Rendering Manipulation: Modify elements, attributes, and styles before the video is generated.
-- Runtime Interaction: Adjust scenes, elements, and playback in response to user input or other events.
-- Note: When encoding server-side into standard video formats, only DOM initialization scripts are executed. Interactive features are disabled.
+---
+
+## JavaScript DOM API
+
+Scripts in `<head>` or `<body>` run in a **restricted player sandbox**.
+
+### Phases
+
+1. **Pre-play (init).** After IR load, before the clock starts: scripts may query and mutate the document tree (attributes, text, styles). Mutations are re-compiled into the active IR snapshot when possible.
+2. **Runtime.** During playback, scripts may listen for events and adjust styles/visibility; structural edits may be limited.
+
+### Minimal surface
+
+```js
+document.querySelector(selector)
+document.querySelectorAll(selector)
+document.getElementById(id)
+element.getAttribute / setAttribute
+element.style  // includes time-* canonical properties
+element.textContent
+htmlv.currentTime  // seconds
+htmlv.duration
+htmlv.play() / htmlv.pause() / htmlv.seek(seconds)
+```
+
+### Events
+
+- `timeupdate` on `htmlv` / document
+- `sceneenter` / `sceneleave` on scene elements
+- `ended` when the root timeline completes
+
+### Security
+
+Scripts run only inside the player origin sandbox (typically an iframe with a generated document). There is no privileged filesystem access. AI `api` URLs are fetched by the player with ordinary CORS rules.
+
+### Encode note
+
+Future server-side encode **must** run only init-phase scripts and **must** disable interactive runtime APIs.
+
+---
+
+## Timeline IR (informative)
+
+The compiler emits JSON IR approximately:
+
+```json
+{
+  "version": 1,
+  "meta": {
+    "title": "Sample Video",
+    "framerate": 30,
+    "framerateMode": "drop-frames",
+    "compileMode": "precompile",
+    "aspectRatio": "16:9",
+    "width": 1920,
+    "seed": "12345",
+    "durationMs": 25000
+  },
+  "scenes": [
+    {
+      "id": null,
+      "tag": "scene",
+      "startMs": 0,
+      "endMs": 10000,
+      "transition": { "effect": "fade", "durationMs": 2000 },
+      "styles": {},
+      "children": []
+    }
+  ],
+  "stylesheets": [],
+  "scripts": []
+}
+```
+
+Each node includes `tag`, absolute `startMs`/`endMs`, resolved `styles`, optional `src`/`text`, `ai` hook metadata, and `children`.
+
+---
+
+## Toolchain
+
+```bash
+npm install
+npm run build
+
+# Compile to IR + player bundle (minimal sample)
+npx htmlv build examples/example.htmlv -o out/
+
+# Preview the editor-shaped showcase (source + stage + track strip)
+npx htmlv serve examples/showcase.htmlv
+```
+
+Library entry: `parseSource` / `compileSource` / `compileFile` → Timeline IR; see `src/index.ts` and [Building an editor on htmlv](#building-an-editor-on-htmlv).
+
+---
 
 ## Examples
 
-### Scene with Transition and Time Adjustments
+### Scene with transition and time adjustments
 
 ```html
-<scene style="scene-transition: fade 2s;">
+<scene style="scene-transition: fade 2s; time-length: 20s;">
     <image src="background.jpg" style="time-length: 20s;"></image>
-    <text class="title" style="start: 2s;">Hello World</text>
+    <text class="title" style="time-start: 2s;">Hello World</text>
 </scene>
 ```
 
-### AI-Generated Video from Prompt
+### AI-generated video from prompt
 
 ```html
-<scene>
+<scene style="time-length: 10s;">
     <video style="width: 100%; height: 100%; time-length: 10s;">
       <ai-generate type="video/mp4" prompt="A serene landscape with mountains and a river at sunset" seed="7890"></ai-generate>
-      <ai-filter type="video/mp4" prompt="Black and White" seed="7890"></ai-generate>
+      <ai-filter type="video/mp4" prompt="Black and White" seed="7890"></ai-filter>
     </video>
 </scene>
 ```
 
-### Sequence Video
+### Sequence
 
 ```html
-<scene>
+<scene style="time-length: 5s;">
     <sequence style="time-length: 5s;">
       <img src="frame1.png">
       <img src="frame2.png">
       <img src="frame3.png">
-      <p style="time-length: 2s;">Hello World</p>
+      <text style="time-length: 2s;">Hello World</text>
     </sequence>
 </scene>
 ```
 
-### Embedding Another htmlv Document
+### Nested htmlv document
 
 ```html
-<iframe src="additional_content.htmlv"></iframe>
+<iframe src="additional_content.htmlv" style="time-length: 10s;"></iframe>
 ```
 
-## Conclusion
+---
 
-htmlv extends HTML and CSS to support time-based media, providing a powerful tool for video creation using web technologies. By integrating advanced features like AI-based filters, lip-syncing, text-to-speech, and temporal styling, developers can create rich, dynamic videos with code.
+## Conformance
+
+### Required (reference player)
+
+- DOCTYPE, html/head/body, scenes, text, video, audio, sequence, img/image, iframe
+- Canonical time properties + aliases `start`/`end`
+- Time-position modes and packing algorithm
+- `scene-transition` with at least `fade`; other effects may fall back to `fade`
+- Framerate meta and `drop-frames` mode
+- `precompile` mode
+- CSS subset + `:time()`
+- Browser player with play/pause/seek
+- AI elements as IR nodes with stub or HTTP hooks (network optional; placeholders required)
+
+### Optional / best-effort
+
+- `compile-during-playback`
+- `framerate-mode: slowdown`
+- All transition effects beyond `fade`
+- Full JS mutation → live IR update
+- Linked stylesheets with complex selectors
+
+### Deferred features
+
+- Server-side encode to MP4/WebM (e.g. ffmpeg)
+- Bundled on-device AI models (HTTP API hooks only)
+- Full CSS layout engines (flex/grid/scroll)
+
+---
+
+## License
+
+MIT

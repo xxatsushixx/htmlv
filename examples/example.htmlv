@@ -2,12 +2,37 @@
 <html>
 <head>
     <title>Sample Video</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="framerate" content="30fps">
+    <meta name="compile-mode" content="precompile">
+    <meta name="aspect-ratio" content="16:9">
+    <style>
+        .title {
+            color: #ffffff;
+            font-size: 48px;
+            font-family: Georgia, serif;
+            text-align: center;
+        }
+        .subtitle {
+            color: #c8e0ff;
+            font-size: 28px;
+            text-align: center;
+            text-display: character;
+            text-duration: 2s;
+        }
+        .title:time(0s, 2s) {
+            opacity: 0.4;
+        }
+        .title:time(2s, 10s) {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
-    <scene style="time-length: 10s; scene-transition: fade 2s;">
-        <text class="title">Welcome to htmlv</text>
+    <scene style="time-length: 10s; scene-transition: fade 1s; background-color: #0b1c2c;">
+        <text class="title" style="time-length: 10s; time-start: 0s;">Welcome to htmlv</text>
+    </scene>
+    <scene style="time-length: 8s; background-color: #12263a;">
+        <text class="subtitle" style="time-length: 8s; time-start: 0.5s;">Creating videos with code</text>
     </scene>
 </body>
 </html>
-

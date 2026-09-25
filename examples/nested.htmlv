@@ -1,0 +1,12 @@
+<!DOCTYPE htmlv>
+<html>
+<head>
+  <title>Nested Clip</title>
+  <meta name="framerate" content="24fps">
+</head>
+<body>
+  <scene style="time-length: 4s; background-color: #203040;">
+    <text style="color: #ffe0a0; font-size: 32px; time-length: 4s;">Nested htmlv iframe</text>
+  </scene>
+</body>
+</html>

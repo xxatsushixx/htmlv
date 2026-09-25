@@ -1,7 +1,6 @@
 "use strict";
-// src/parser/ASTNode.ts
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DocumentNode = exports.AttributeNode = exports.TextNode = exports.ElementNode = exports.ASTNodeType = exports.ASTNode = void 0;
+exports.VOID_TAGS = exports.CommentNode = exports.DoctypeNode = exports.DocumentNode = exports.AttributeNode = exports.TextNode = exports.ElementNode = exports.ASTNodeType = exports.ASTNode = void 0;
 /**
  * Base class for all AST nodes.
  */
@@ -21,8 +20,9 @@ var ASTNodeType;
     ASTNodeType[ASTNodeType["Element"] = 1] = "Element";
     ASTNodeType[ASTNodeType["Text"] = 2] = "Text";
     ASTNodeType[ASTNodeType["Attribute"] = 3] = "Attribute";
-    // ... add other node types as needed
-})(ASTNodeType = exports.ASTNodeType || (exports.ASTNodeType = {}));
+    ASTNodeType[ASTNodeType["Doctype"] = 4] = "Doctype";
+    ASTNodeType[ASTNodeType["Comment"] = 5] = "Comment";
+})(ASTNodeType || (exports.ASTNodeType = ASTNodeType = {}));
 /**
  * Represents an element node in the AST.
  */
@@ -32,6 +32,10 @@ class ElementNode extends ASTNode {
         this.tagName = tagName;
         this.attributes = attributes;
         this.children = children;
+    }
+    getAttribute(name) {
+        const attr = this.attributes.find((a) => a.name === name);
+        return attr === null || attr === void 0 ? void 0 : attr.value;
     }
 }
 exports.ElementNode = ElementNode;
@@ -60,9 +64,41 @@ exports.AttributeNode = AttributeNode;
  * Represents the root document node in the AST.
  */
 class DocumentNode extends ASTNode {
-    constructor(children) {
+    constructor(children, doctype = null) {
         super(ASTNodeType.Document, children);
         this.children = children;
+        this.doctype = doctype;
     }
 }
 exports.DocumentNode = DocumentNode;
+class DoctypeNode extends ASTNode {
+    constructor(value) {
+        super(ASTNodeType.Doctype);
+        this.value = value;
+    }
+}
+exports.DoctypeNode = DoctypeNode;
+class CommentNode extends ASTNode {
+    constructor(value) {
+        super(ASTNodeType.Comment);
+        this.value = value;
+    }
+}
+exports.CommentNode = CommentNode;
+/** HTML void / self-closing style tags (no children expected). */
+exports.VOID_TAGS = new Set([
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
+]);

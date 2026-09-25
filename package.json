@@ -1,17 +1,28 @@
 {
-  "name": "htmlv-project",
+  "name": "htmlv",
   "version": "1.0.0",
-  "description": "HTML for Video (htmlv) compiler and runtime implemented in TypeScript",
+  "description": "HTML for Video (htmlv) — compiler, timeline IR, and browser player",
   "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "test": "echo \"No tests specified\""
+  "types": "dist/index.d.ts",
+  "bin": {
+    "htmlv": "dist/cli.js"
   },
-  "author": "Your Name",
+  "scripts": {
+    "build": "tsc && node scripts/chmod-cli.js",
+    "start": "node dist/index.js",
+    "serve": "node dist/cli.js serve examples/showcase.htmlv",
+    "test": "npm run build && node dist/test/run.js"
+  },
+  "author": "htmlv contributors",
   "license": "MIT",
+  "files": [
+    "dist",
+    "player",
+    "examples",
+    "README.md"
+  ],
   "devDependencies": {
     "@types/node": "^22.7.4",
-    "typescript": "^4.5.2"
+    "typescript": "^5.6.0"
   }
 }

@@ -1,0 +1,32 @@
+<!DOCTYPE htmlv>
+<html>
+<head>
+  <title>Composition</title>
+  <meta name="framerate" content="30fps">
+  <meta name="aspect-ratio" content="16:9">
+  <style>
+    .nest {
+      color: #ffe0a0;
+      font-size: 40px;
+      font-family: Georgia, "Times New Roman", serif;
+      text-align: center;
+    }
+    .sub {
+      color: #9eb6d0;
+      font-size: 22px;
+      text-align: center;
+      text-display: word;
+      text-duration: 1.5s;
+    }
+  </style>
+</head>
+<body>
+  <scene style="time-length: 4s; background-color: #203040;">
+    <text class="nest" style="time-length: 4s;">Nested composition</text>
+    <text
+      class="sub"
+      style="time-position: absolute; time-start: 1s; time-length: 3s; top: 62%;"
+    >iframe → nested Timeline IR</text>
+  </scene>
+</body>
+</html>

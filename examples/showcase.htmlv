@@ -1,0 +1,83 @@
+<!DOCTYPE htmlv>
+<html>
+<head>
+  <title>Editor Substrate Demo</title>
+  <meta name="framerate" content="30fps">
+  <meta name="compile-mode" content="precompile">
+  <meta name="aspect-ratio" content="16:9">
+  <meta name="width" content="1280">
+  <meta name="seed" content="42">
+  <style>
+    .hero {
+      color: #f2f6fb;
+      font-size: 52px;
+      font-family: Georgia, "Times New Roman", serif;
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+    .hero:time(0s, 1.2s) {
+      opacity: 0.35;
+    }
+    .hero:time(1.2s, 5s) {
+      opacity: 1;
+    }
+    .lower-third {
+      color: #f2f6fb;
+      font-size: 28px;
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      text-align: left;
+      background-color: rgba(8, 14, 22, 0.72);
+      padding: 12px 20px;
+    }
+    .ai-caption {
+      color: #9eb6d0;
+      font-size: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- 1. Title card + transition -->
+  <scene id="title" style="time-length: 5s; scene-transition: fade 1s; background-color: #0b1c2c;">
+    <text class="hero" style="time-length: 5s;">htmlv — editor substrate</text>
+  </scene>
+
+  <!-- 2. A-roll bed + overlay lower-third -->
+  <scene id="aroll" style="time-length: 6s; scene-transition: dissolve 0.8s; background-color: #0a121c;">
+    <img
+      id="bed"
+      style="time-length: 6s; width: 100%; height: 100%;"
+      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%231a3a55'/%3E%3Cstop offset='1' stop-color='%23081420'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='42%25' fill='%236a849e' text-anchor='middle' font-size='28' font-family='sans-serif'%3EA-roll bed%3C/text%3E%3Ctext x='50%25' y='50%25' fill='%234a5a6c' text-anchor='middle' font-size='18' font-family='sans-serif'%3Eprimary visual track%3C/text%3E%3C/svg%3E"
+    />
+    <text
+      class="lower-third"
+      style="time-position: absolute; time-start: 1.2s; time-length: 4s; top: 78%; left: 6%; width: 55%;"
+    >Overlay — lower-third on V1</text>
+  </scene>
+
+  <!-- 3. B-roll sequence / multiclip -->
+  <scene id="broll" style="time-length: 6s; scene-transition: slide 0.8s; background-color: #0e1620;">
+    <sequence style="time-length: 6s;">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Crect fill='%23224466' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='48%25' fill='white' text-anchor='middle' font-size='40' font-family='Georgia,serif'%3EB-roll 1%3C/text%3E%3C/svg%3E" />
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Crect fill='%22446622' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='48%25' fill='white' text-anchor='middle' font-size='40' font-family='Georgia,serif'%3EB-roll 2%3C/text%3E%3C/svg%3E" />
+      <text style="time-length: 2s; color: #f2f6fb; font-size: 36px; font-family: Georgia, serif; text-align: center;">Multiclip &lt;sequence&gt;</text>
+    </sequence>
+  </scene>
+
+  <!-- 4. Generative / AI slot -->
+  <scene id="ai" style="time-length: 5s; scene-transition: zoom 0.8s; background-color: #1a1a2e;">
+    <video style="time-length: 5s; width: 100%; height: 100%;">
+      <ai-generate type="video/mp4" prompt="A serene mountain river at sunset" seed="7890"></ai-generate>
+    </video>
+    <text
+      class="ai-caption"
+      style="time-position: absolute; time-start: 0.4s; time-length: 4.2s; top: 82%;"
+    >AI hook — stub when no api</text>
+  </scene>
+
+  <!-- 5. Nested composition -->
+  <scene id="comp" style="time-length: 4s; background-color: #0a1018;">
+    <iframe src="showcase-nested.htmlv" style="time-length: 4s;"></iframe>
+  </scene>
+</body>
+</html>

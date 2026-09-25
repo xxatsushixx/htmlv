@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>htmlv Player</title>
+  <link rel="stylesheet" href="player.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="identity">
+      <div class="identity-left">
+        <div class="brand-row">
+          <span class="brand">htmlv</span>
+          <span class="tagline">HTML for Video</span>
+        </div>
+        <div id="source-path" class="source-path"></div>
+      </div>
+      <div class="identity-right">
+        <div id="doc-title" class="doc-title"></div>
+        <div id="meta-chips" class="meta-chips" aria-label="Document meta"></div>
+        <div class="status-chips" aria-label="Runtime status">
+          <span class="status-chip">Preview</span>
+          <span class="status-chip">AI: stub/HTTP</span>
+          <span class="status-chip muted">Encode: later</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside id="source-pane" class="source-pane" aria-label="Source">
+        <div class="source-toolbar">
+          <button id="btn-toggle-source" type="button" class="btn-toggle-source" title="Hide source" aria-expanded="true">
+            Source
+          </button>
+          <span class="source-toolbar-label">.htmlv</span>
+        </div>
+        <div id="source-scroll" class="source-scroll">
+          <pre id="source-code" class="source-code"></pre>
+        </div>
+      </aside>
+
+      <div class="preview-column">
+        <div class="preview-toolbar">
+          <button id="btn-show-source" type="button" class="btn-show-source" title="Show source">
+            Show source
+          </button>
+        </div>
+        <div class="stage-wrap">
+          <div id="stage" class="stage" aria-label="Video stage"></div>
+        </div>
+
+        <div class="transport">
+          <div class="controls">
+            <button id="btn-play" type="button" title="Play/Pause (Space)">Play</button>
+            <div class="seek-wrap">
+              <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek" />
+              <div id="scene-ticks" class="scene-ticks" aria-hidden="true"></div>
+            </div>
+            <span id="time-label">0:00 / 0:00</span>
+          </div>
+          <div id="scene-strip" class="scene-strip" role="tablist" aria-label="Scenes"></div>
+          <div id="track-strip" class="track-strip" aria-label="Tracks (read-only)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.__HTMLV_IR__ = null; // replaced or set by serve
+    window.__HTMLV_SOURCE__ = null; // set by build/serve
+    window.__HTMLV_SOURCE_TEXT__ = null; // set by build/serve
+  </script>
+  <script src="player.js"></script>
+</body>
+</html>

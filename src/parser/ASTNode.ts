@@ -1,5 +1,3 @@
-// src/parser/ASTNode.ts
-
 /**
  * Base class for all AST nodes.
  */
@@ -15,7 +13,8 @@ export enum ASTNodeType {
   Element,
   Text,
   Attribute,
-  // ... add other node types as needed
+  Doctype,
+  Comment,
 }
 
 /**
@@ -28,6 +27,11 @@ export class ElementNode extends ASTNode {
     public children: ASTNode[]
   ) {
     super(ASTNodeType.Element, children);
+  }
+
+  getAttribute(name: string): string | undefined {
+    const attr = this.attributes.find((a) => a.name === name);
+    return attr?.value;
   }
 }
 
@@ -53,9 +57,40 @@ export class AttributeNode extends ASTNode {
  * Represents the root document node in the AST.
  */
 export class DocumentNode extends ASTNode {
-  constructor(public children: ASTNode[]) {
+  constructor(
+    public children: ASTNode[],
+    public doctype: string | null = null
+  ) {
     super(ASTNodeType.Document, children);
   }
 }
 
+export class DoctypeNode extends ASTNode {
+  constructor(public value: string) {
+    super(ASTNodeType.Doctype);
+  }
+}
 
+export class CommentNode extends ASTNode {
+  constructor(public value: string) {
+    super(ASTNodeType.Comment);
+  }
+}
+
+/** HTML void / self-closing style tags (no children expected). */
+export const VOID_TAGS = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
+]);

@@ -1,35 +1,13 @@
 /**
  * htmlv library entry + default CLI when run as node dist/index.js
  */
-
 export { Token, TokenType } from './parser/Token';
 export { Tokenizer } from './parser/Tokenizer';
 export { Parser } from './parser/Parser';
-export {
-  ASTNode,
-  ASTNodeType,
-  ElementNode,
-  TextNode,
-  AttributeNode,
-  DocumentNode,
-  DoctypeNode,
-  CommentNode,
-} from './parser/ASTNode';
+export { ASTNode, ASTNodeType, ElementNode, TextNode, AttributeNode, DocumentNode, DoctypeNode, CommentNode, } from './parser/ASTNode';
 export { Compiler } from './compiler/Compiler';
 export type { CompileOptions } from './compiler/Compiler';
 export type { TimelineIR, TimelineNode, DocumentMeta } from './compiler/ir';
 export { Runtime } from './runtime/Runtime';
 export { parseSource, compileSource, compileFile } from './pipeline';
 export { main as cli, build, serve } from './cli';
-
-import { main } from './cli';
-
-// When executed directly, run CLI (default: serve example if no args — keep help)
-if (require.main === module) {
-  const args = process.argv.slice(2);
-  if (args.length === 0) {
-    main(['serve', 'examples/showcase.htmlv']);
-  } else {
-    main(args);
-  }
-}

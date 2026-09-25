@@ -1,15 +1,21 @@
-// src/runtime/Runtime.ts
-
 /**
- * Runtime class responsible for executing the compiled code or interpreting the AST.
+ * Node-side runtime helpers: load IR, optional static serve payload.
  */
+
+import type { TimelineIR } from '../compiler/ir';
+
 export class Runtime {
   /**
-   * Executes the given code or AST.
-   * @param input - The compiled code as a string or AST.
+   * Validates and returns IR for the browser player.
    */
-  public execute(input: string | any): void {
-    // TODO: Implement the runtime execution logic
+  public execute(input: TimelineIR | string): TimelineIR {
+    if (typeof input === 'string') {
+      return JSON.parse(input) as TimelineIR;
+    }
+    return input;
+  }
+
+  public toJSON(ir: TimelineIR): string {
+    return JSON.stringify(ir, null, 2);
   }
 }
-
