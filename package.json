@@ -8,7 +8,8 @@
     "htmlv": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc && node scripts/chmod-cli.js",
+    "build": "tsc && node scripts/chmod-cli.js && node scripts/copy-ffmpeg-vendor.js",
+    "postinstall": "node scripts/copy-ffmpeg-vendor.js",
     "start": "node dist/index.js",
     "serve": "node dist/cli.js serve examples/showcase.htmlv",
     "test": "npm run build && node dist/test/run.js"
@@ -24,5 +25,10 @@
   "devDependencies": {
     "@types/node": "^22.7.4",
     "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@ffmpeg/core": "^0.12.6",
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1"
   }
 }

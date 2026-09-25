@@ -31,11 +31,27 @@ function findPlayerDir(): string {
   throw new Error('Could not find player/ directory');
 }
 
+function copyDirRecursive(src: string, dest: string): void {
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const from = path.join(src, entry.name);
+    const to = path.join(dest, entry.name);
+    if (entry.isDirectory()) copyDirRecursive(from, to);
+    else fs.copyFileSync(from, to);
+  }
+}
+
 function copyPlayer(outDir: string): void {
   const playerDir = findPlayerDir();
   fs.mkdirSync(outDir, { recursive: true });
   for (const file of ['index.html', 'player.css', 'player.js']) {
     fs.copyFileSync(path.join(playerDir, file), path.join(outDir, file));
+  }
+  for (const dir of ['vendor', 'themes']) {
+    const src = path.join(playerDir, dir);
+    if (fs.existsSync(src)) {
+      copyDirRecursive(src, path.join(outDir, dir));
+    }
   }
 }
 
@@ -77,6 +93,11 @@ export function build(input: string, outDir: string): void {
   const sourceText = fs.readFileSync(resolved, 'utf-8');
 
   copyPlayer(outDir);
+  // Copy sibling assets/ next to the .htmlv so relative img/video srcs resolve in preview
+  const assetsSrc = path.join(path.dirname(resolved), 'assets');
+  if (fs.existsSync(assetsSrc) && fs.statSync(assetsSrc).isDirectory()) {
+    copyDirRecursive(assetsSrc, path.join(outDir, 'assets'));
+  }
   fs.writeFileSync(path.join(outDir, 'timeline.json'), json, 'utf-8');
   fs.writeFileSync(path.join(outDir, 'source.htmlv'), sourceText, 'utf-8');
 
@@ -91,9 +112,12 @@ export function build(input: string, outDir: string): void {
 
 function contentType(filePath: string): string {
   if (filePath.endsWith('.html')) return 'text/html; charset=utf-8';
-  if (filePath.endsWith('.js')) return 'application/javascript; charset=utf-8';
+  if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
+    return 'application/javascript; charset=utf-8';
+  }
   if (filePath.endsWith('.css')) return 'text/css; charset=utf-8';
   if (filePath.endsWith('.json')) return 'application/json; charset=utf-8';
+  if (filePath.endsWith('.wasm')) return 'application/wasm';
   if (filePath.endsWith('.svg')) return 'image/svg+xml';
   if (filePath.endsWith('.png')) return 'image/png';
   if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) return 'image/jpeg';

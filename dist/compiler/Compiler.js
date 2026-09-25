@@ -4,8 +4,21 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Compiler = void 0;
+exports.decodeHtmlEntities = decodeHtmlEntities;
 const ASTNode_1 = require("../parser/ASTNode");
 const style_1 = require("./style");
+/** Decode common HTML entities in text nodes (e.g. &lt;sequence&gt; → <sequence>). */
+function decodeHtmlEntities(s) {
+    return s
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;|&#39;/g, "'")
+        .replace(/&nbsp;/g, '\u00a0')
+        .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+        .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(parseInt(d, 10)));
+}
 class Compiler {
     constructor() {
         this.cssRules = [];
@@ -203,7 +216,7 @@ class Compiler {
             if (child.type === ASTNode_1.ASTNodeType.Comment)
                 continue;
             if (child.type === ASTNode_1.ASTNodeType.Text) {
-                const text = child.content;
+                const text = decodeHtmlEntities(child.content);
                 if (!text.trim())
                     continue;
                 // anonymous text as <text>
@@ -537,7 +550,7 @@ class Compiler {
             else if (c.type === ASTNode_1.ASTNodeType.Element)
                 out += this.collectText(c);
         }
-        return out;
+        return decodeHtmlEntities(out);
     }
 }
 exports.Compiler = Compiler;

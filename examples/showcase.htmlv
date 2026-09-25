@@ -8,15 +8,34 @@
   <meta name="width" content="1280">
   <meta name="seed" content="42">
   <style>
+    #title {
+      background: radial-gradient(120% 90% at 50% 15%, #2a5a7a 0%, #122a40 42%, #0b1c2c 70%, #060a10 100%);
+    }
+    #aroll {
+      background: linear-gradient(165deg, #1a3048 0%, #0c1824 48%, #081018 100%);
+    }
+    #broll {
+      background: linear-gradient(180deg, #152028 0%, #0e1620 55%, #0a1016 100%);
+    }
+    #ai {
+      background: radial-gradient(90% 70% at 50% 40%, #2a2a48 0%, #1a1a2e 55%, #0e0e18 100%);
+    }
+    #comp {
+      background: linear-gradient(160deg, #1a2838 0%, #0a1018 100%);
+    }
+    #cat {
+      background: #0a1016;
+    }
     .hero {
       color: #f2f6fb;
       font-size: 52px;
       font-family: Georgia, "Times New Roman", serif;
       text-align: center;
       letter-spacing: 0.02em;
+      easing: ease-in-out;
     }
     .hero:time(0s, 1.2s) {
-      opacity: 0.35;
+      opacity: 0.4;
     }
     .hero:time(1.2s, 5s) {
       opacity: 1;
@@ -26,7 +45,7 @@
       font-size: 28px;
       font-family: "Segoe UI", "Helvetica Neue", sans-serif;
       text-align: left;
-      background-color: rgba(8, 14, 22, 0.72);
+      background: linear-gradient(90deg, rgba(8, 14, 22, 0.85) 0%, rgba(8, 14, 22, 0.55) 70%, rgba(8, 14, 22, 0) 100%);
       padding: 12px 20px;
     }
     .ai-caption {
@@ -37,17 +56,17 @@
   </style>
 </head>
 <body>
-  <!-- 1. Title card + transition -->
-  <scene id="title" style="time-length: 5s; scene-transition: fade 1s; background-color: #0b1c2c;">
+  <!-- 1. Title card + fade transition -->
+  <scene id="title" style="time-length: 5s; scene-transition: fade 1.2s; easing: ease-in-out;">
     <text class="hero" style="time-length: 5s;">htmlv — editor substrate</text>
   </scene>
 
   <!-- 2. A-roll bed + overlay lower-third -->
-  <scene id="aroll" style="time-length: 6s; scene-transition: dissolve 0.8s; background-color: #0a121c;">
+  <scene id="aroll" style="time-length: 6s; scene-transition: dissolve 1s; easing: ease-in-out;">
     <img
       id="bed"
       style="time-length: 6s; width: 100%; height: 100%;"
-      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%231a3a55'/%3E%3Cstop offset='1' stop-color='%23081420'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='42%25' fill='%236a849e' text-anchor='middle' font-size='28' font-family='sans-serif'%3EA-roll bed%3C/text%3E%3Ctext x='50%25' y='50%25' fill='%234a5a6c' text-anchor='middle' font-size='18' font-family='sans-serif'%3Eprimary visual track%3C/text%3E%3C/svg%3E"
+      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%233a6a8a' stop-opacity='0.35'/%3E%3Cstop offset='0.55' stop-color='%23142838' stop-opacity='0.15'/%3E%3Cstop offset='1' stop-color='%23081018' stop-opacity='0'/%3E%3C/linearGradient%3E%3CradialGradient id='v' cx='50%25' cy='100%25' r='70%25'%3E%3Cstop stop-color='%23000000' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23000000' stop-opacity='0.45'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3Crect fill='url(%23v)' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='40%25' fill='%239eb6d0' text-anchor='middle' font-size='26' font-family='sans-serif'%3EA-roll bed%3C/text%3E%3Ctext x='50%25' y='48%25' fill='%236a849e' text-anchor='middle' font-size='18' font-family='sans-serif'%3Eprimary visual track%3C/text%3E%3C/svg%3E"
     />
     <text
       class="lower-third"
@@ -56,16 +75,29 @@
   </scene>
 
   <!-- 3. B-roll sequence / multiclip -->
-  <scene id="broll" style="time-length: 6s; scene-transition: slide 0.8s; background-color: #0e1620;">
+  <scene id="broll" style="time-length: 6s; scene-transition: slide 0.9s; easing: ease-in-out;">
     <sequence style="time-length: 6s;">
-      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Crect fill='%23224466' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='48%25' fill='white' text-anchor='middle' font-size='40' font-family='Georgia,serif'%3EB-roll 1%3C/text%3E%3C/svg%3E" />
-      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Crect fill='%22446622' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='48%25' fill='white' text-anchor='middle' font-size='40' font-family='Georgia,serif'%3EB-roll 2%3C/text%3E%3C/svg%3E" />
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop stop-color='%233a6a9a'/%3E%3Cstop offset='1' stop-color='%231a3048'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='48%25' fill='white' text-anchor='middle' font-size='40' font-family='Georgia,serif'%3EB-roll 1%3C/text%3E%3C/svg%3E" />
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='1' x2='1' y2='0'%3E%3Cstop stop-color='%234a7a4a'/%3E%3Cstop offset='1' stop-color='%23204028'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill='url(%23g)' width='100%25' height='100%25'/%3E%3Ctext x='50%25' y='48%25' fill='white' text-anchor='middle' font-size='40' font-family='Georgia,serif'%3EB-roll 2%3C/text%3E%3C/svg%3E" />
       <text style="time-length: 2s; color: #f2f6fb; font-size: 36px; font-family: Georgia, serif; text-align: center;">Multiclip &lt;sequence&gt;</text>
     </sequence>
   </scene>
 
-  <!-- 4. Generative / AI slot -->
-  <scene id="ai" style="time-length: 5s; scene-transition: zoom 0.8s; background-color: #1a1a2e;">
+  <!-- 4. Still photo (placecats.com) -->
+  <scene id="cat" style="time-length: 5s; scene-transition: dissolve 0.9s; easing: ease-in-out;">
+    <img
+      id="placecat"
+      src="assets/placecat-640x960.jpg"
+      style="time-length: 5s; width: 100%; height: 100%;"
+    />
+    <text
+      class="lower-third"
+      style="time-position: absolute; time-start: 0.8s; time-length: 3.6s; top: 78%; left: 6%; width: 55%;"
+    >Still — placecats.com / 640×960</text>
+  </scene>
+
+  <!-- 5. Generative / AI slot -->
+  <scene id="ai" style="time-length: 5s; scene-transition: zoom 0.9s; easing: ease-in-out;">
     <video style="time-length: 5s; width: 100%; height: 100%;">
       <ai-generate type="video/mp4" prompt="A serene mountain river at sunset" seed="7890"></ai-generate>
     </video>
@@ -75,8 +107,8 @@
     >AI hook — stub when no api</text>
   </scene>
 
-  <!-- 5. Nested composition -->
-  <scene id="comp" style="time-length: 4s; background-color: #0a1018;">
+  <!-- 6. Nested composition -->
+  <scene id="comp" style="time-length: 4s;">
     <iframe src="showcase-nested.htmlv" style="time-length: 4s;"></iframe>
   </scene>
 </body>

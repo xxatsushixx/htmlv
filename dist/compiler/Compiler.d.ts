@@ -3,6 +3,8 @@
  */
 import { DocumentNode } from '../parser/ASTNode';
 import { TimelineIR } from './ir';
+/** Decode common HTML entities in text nodes (e.g. &lt;sequence&gt; → <sequence>). */
+export declare function decodeHtmlEntities(s: string): string;
 export interface CompileOptions {
     /** Resolve linked CSS / nested htmlv relative to this directory */
     baseDir?: string;

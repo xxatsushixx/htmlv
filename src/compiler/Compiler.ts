@@ -28,6 +28,19 @@ import {
   CssRule,
 } from './style';
 
+/** Decode common HTML entities in text nodes (e.g. &lt;sequence&gt; → <sequence>). */
+export function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;|&#39;/g, "'")
+    .replace(/&nbsp;/g, '\u00a0')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(parseInt(d, 10)));
+}
+
 export interface CompileOptions {
   /** Resolve linked CSS / nested htmlv relative to this directory */
   baseDir?: string;
@@ -266,7 +279,7 @@ export class Compiler {
     for (const child of parent.children) {
       if (child.type === ASTNodeType.Comment) continue;
       if (child.type === ASTNodeType.Text) {
-        const text = (child as TextNode).content;
+        const text = decodeHtmlEntities((child as TextNode).content);
         if (!text.trim()) continue;
         // anonymous text as <text>
         const anonStyles: Record<string, string> = {};
@@ -694,6 +707,6 @@ export class Compiler {
       if (c.type === ASTNodeType.Text) out += (c as TextNode).content;
       else if (c.type === ASTNodeType.Element) out += this.collectText(c as ElementNode);
     }
-    return out;
+    return decodeHtmlEntities(out);
   }
 }

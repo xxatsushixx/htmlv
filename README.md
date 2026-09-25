@@ -28,8 +28,9 @@ Use htmlv as the **preview substrate**. Emit `.htmlv` (or patch IR) from your ed
 | Browser preview runtime | **Required / shipping** |
 | Timeline IR as interchange | **Shipping** |
 | AI media | **HTTP `api` hook**; stub placeholder if omitted |
+| Browser encode (Download) | **Shipping** via `ffmpeg.wasm` (stage raster → MP4) |
 | Live mutate → full IR recompile | **Best-effort** (optional conformance) |
-| Server encode (MP4/WebM) | **Deferred** |
+| Server encode (ffmpeg CLI) | **Deferred** |
 
 ### Editor → htmlv map
 
@@ -520,9 +521,11 @@ Library entry: `parseSource` / `compileSource` / `compileFile` → Timeline IR; 
 
 ### Deferred features
 
-- Server-side encode to MP4/WebM (e.g. ffmpeg)
+- Server-side encode to MP4/WebM via native ffmpeg (CLI/CI)
 - Bundled on-device AI models (HTTP API hooks only)
 - Full CSS layout engines (flex/grid/scroll)
+
+> **Browser Download:** the reference player can encode a preview MP4 in-browser with `ffmpeg.wasm` (rasterized stage frames). Prefer server encode for production quality and long timelines.
 
 ---
 
